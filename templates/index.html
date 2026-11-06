@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WidyaTata AI - Administrasi Kegiatan &amp; Anggaran Cerdas untuk Bali</title>
+  <meta name="description" content="WidyaTata AI membantu OSIS, BEM, Pramuka, dan komunitas pemuda Bali menyusun proposal, RAB, audit anggaran, surat, dan LPJ.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+    tailwind.config = {
+      theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'] } } }
+    };
+  </script>
+  <style type="text/tailwindcss">
+    @layer components {
+      .field { @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200; }
+      .lbl { @apply mb-1 block text-sm font-semibold text-slate-700; }
+      .btn-primary { @apply inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:cursor-not-allowed disabled:opacity-60; }
+      .btn-ghost { @apply inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-600 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-200; }
+      .btn-demo { @apply flex flex-col items-start rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-left transition hover:border-sky-500 hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-300; }
+      .card { @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6; }
+      .th { @apply bg-slate-100 px-3 py-2 text-left text-xs font-semibold text-slate-600; }
+      .td { @apply border-t border-slate-100 px-3 py-2 align-top text-sm text-slate-700; }
+    }
+  </style>
+  <style>
+    html { scroll-behavior: smooth; }
+    body { font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif; }
+    .tab-btn { color: #dbeafe; border-radius: 0.6rem; padding: 0.55rem 0.9rem; font-size: 0.875rem; font-weight: 600; white-space: nowrap; transition: background .15s; }
+    .tab-btn:hover { background: rgba(255,255,255,.12); }
+    .tab-btn.is-active { background: #fff; color: #1e40af; }
+    .sub-btn { border-bottom: 2px solid transparent; padding: .5rem .25rem; font-size: .875rem; font-weight: 600; color: #64748b; }
+    .sub-btn.is-active { border-color: #2563eb; color: #1d4ed8; }
+    .paper { font-family: "Times New Roman", Times, serif; font-size: 1rem; line-height: 1.7; white-space: pre-wrap; color: #0f172a; }
+    @keyframes sweep { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }
+    .sweep { animation: sweep 1.4s ease-in-out infinite; }
+    @media (prefers-reduced-motion: reduce) { .sweep, .animate-spin, .animate-bounce { animation: none !important; } html { scroll-behavior: auto; } }
+    @media print {
+      @page { margin: 14mm; }
+      body { background: #fff !important; }
+      .no-print, #loading, #toast { display: none !important; }
+      #appRoot header, #appRoot footer, #disclosure { display: none !important; }
+      .card { box-shadow: none !important; border: none !important; padding: 0 !important; }
+      table { page-break-inside: auto; }
+      tr { page-break-inside: avoid; }
+      body.print-modal #appRoot { display: none !important; }
+      body.print-modal #detailModal { position: static !important; background: none !important; padding: 0 !important; display: block !important; overflow: visible !important; }
+      body.print-modal #detailModal > div { box-shadow: none !important; max-width: none !important; border-radius: 0 !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased">
+<div id="appRoot">
+
+  <!-- ================= HEADER ================= -->
+  <header class="bg-gradient-to-br from-slate-900 via-blue-800 to-blue-600 text-white">
+    <div class="mx-auto max-w-6xl px-4 pb-4 pt-6 sm:px-6">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 class="text-2xl font-extrabold tracking-tight sm:text-3xl">WidyaTata AI</h1>
+          <p class="mt-1 max-w-2xl text-sm text-blue-100 sm:text-base">Susun proposal, RAB, audit anggaran, surat, dan LPJ kegiatan di Bali dalam hitungan menit.</p>
+        </div>
+        <div id="statusBadge" class="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-blue-50 ring-1 ring-white/20">Memeriksa layanan AI...</div>
+      </div>
+      <nav class="mt-5 flex gap-1 overflow-x-auto pb-1" aria-label="Navigasi fitur">
+        <button class="tab-btn is-active" data-tab="proposal">Proposal &amp; RAB</button>
+        <button class="tab-btn" data-tab="audit">Audit Anggaran</button>
+        <button class="tab-btn" data-tab="document">Surat &amp; LPJ</button>
+        <button class="tab-btn" data-tab="dashboard">Arsip &amp; Analitik</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6">
+
+    <!-- ================= TAB 1: PROPOSAL & RAB ================= -->
+    <section id="tab-proposal" class="tab-panel space-y-6">
+      <div class="card no-print">
+        <h2 class="text-lg font-bold text-slate-900">Smart Proposal &amp; RAB Architect</h2>
+        <p class="mt-1 text-sm text-slate-600">Isi data kegiatan. AI menyusun latar belakang bernuansa Bali, rundown, dan RAB yang totalnya tepat sama dengan pagu.</p>
+        <div id="demo-proposal" class="mt-4 grid gap-2 sm:grid-cols-3"></div>
+        <form id="form-proposal" class="mt-5 grid gap-4 md:grid-cols-2">
+          <div class="md:col-span-2">
+            <label class="lbl" for="p_nama">Nama kegiatan</label>
+            <input id="p_nama" class="field" required maxlength="150" placeholder="Contoh: Workshop Teknologi AI &amp; Web Development Mahasiswa se-Bali">
+          </div>
+          <div>
+            <label class="lbl" for="p_kategori">Kategori organisasi</label>
+            <select id="p_kategori" class="field">
+              <option>BEM/UKM Kampus</option>
+              <option>OSIS SMA/SMK</option>
+              <option>Pramuka/Dewan Kerja</option>
+              <option>Komunitas Pemuda Bali</option>
+            </select>
+          </div>
+          <div>
+            <label class="lbl" for="p_lokasi">Lokasi di Bali</label>
+            <input id="p_lokasi" class="field" required maxlength="100" placeholder="Contoh: Denpasar">
+          </div>
+          <div>
+            <label class="lbl" for="p_peserta">Jumlah peserta</label>
+            <input id="p_peserta" type="number" min="1" class="field" required placeholder="120">
+          </div>
+          <div>
+            <label class="lbl" for="p_durasi">Durasi (hari)</label>
+            <input id="p_durasi" type="number" min="1" max="14" class="field" required placeholder="2">
+          </div>
+          <div class="md:col-span-2">
+            <label class="lbl" for="p_pagu">Total pagu anggaran (Rp)</label>
+            <input id="p_pagu" type="number" min="100000" step="1000" class="field" required placeholder="15000000">
+          </div>
+          <div class="md:col-span-2 flex flex-wrap gap-2">
+            <button type="submit" class="btn-primary">Buat Proposal &amp; RAB dengan AI</button>
+            <button type="reset" class="btn-ghost">Kosongkan form</button>
+          </div>
+        </form>
+      </div>
+      <div id="out-proposal"></div>
+    </section>
+
+    <!-- ================= TAB 2: AUDIT ================= -->
+    <section id="tab-audit" class="tab-panel hidden space-y-6">
+      <div class="card no-print">
+        <h2 class="text-lg font-bold text-slate-900">AI Budget &amp; Feasibility Auditor</h2>
+        <p class="mt-1 text-sm text-slate-600">Tempel rancangan anggaran manual Anda. AI menilai kelayakan, efisiensi, dan item krusial yang terlewat.</p>
+        <div id="demo-audit" class="mt-4 grid gap-2 sm:grid-cols-3"></div>
+        <form id="form-audit" class="mt-5 grid gap-4">
+          <div>
+            <label class="lbl" for="a_nama">Nama kegiatan</label>
+            <input id="a_nama" class="field" required maxlength="150" placeholder="Nama kegiatan yang dianggarkan">
+          </div>
+          <div>
+            <label class="lbl" for="a_desc">Deskripsi singkat acara</label>
+            <textarea id="a_desc" rows="3" class="field" placeholder="Jenis acara, lokasi, jumlah peserta, durasi, dan pagu yang tersedia"></textarea>
+          </div>
+          <div>
+            <label class="lbl" for="a_rincian">Rincian anggaran (satu pos per baris)</label>
+            <textarea id="a_rincian" rows="9" class="field font-mono" required placeholder="Sewa aula 2 hari = Rp 3.000.000&#10;Konsumsi 100 orang x Rp 30.000 = Rp 3.000.000"></textarea>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button type="submit" class="btn-primary">Audit Anggaran dengan AI</button>
+            <button type="reset" class="btn-ghost">Kosongkan form</button>
+          </div>
+        </form>
+      </div>
+      <div id="out-audit"></div>
+    </section>
+
+    <!-- ================= TAB 3: SURAT & LPJ ================= -->
+    <section id="tab-document" class="tab-panel hidden space-y-6">
+      <div class="card no-print">
+        <h2 class="text-lg font-bold text-slate-900">Smart Correspondence &amp; LPJ Generator</h2>
+        <p class="mt-1 text-sm text-slate-600">Hasilkan draf surat resmi dan ringkasan LPJ. Data yang belum Anda isi akan ditandai dengan placeholder [ ].</p>
+        <div id="demo-document" class="mt-4 grid gap-2 sm:grid-cols-3"></div>
+        <form id="form-document" class="mt-5 grid gap-4 md:grid-cols-2">
+          <div class="md:col-span-2">
+            <label class="lbl" for="d_jenis">Jenis dokumen</label>
+            <select id="d_jenis" class="field">
+              <option value="peminjaman_gedung">Surat Peminjaman Gedung Kampus/Sekolah</option>
+              <option value="undangan_pemateri">Surat Undangan Pemateri/Juri</option>
+              <option value="sponsorship">Surat Permohonan Sponsorship</option>
+              <option value="lpj">Ringkasan Laporan Pertanggungjawaban (LPJ)</option>
+            </select>
+          </div>
+          <div class="md:col-span-2">
+            <label class="lbl" for="d_nama">Nama kegiatan</label>
+            <input id="d_nama" class="field" required maxlength="150" placeholder="Nama kegiatan">
+          </div>
+          <div>
+            <label class="lbl" for="d_org">Nama organisasi pengirim</label>
+            <input id="d_org" class="field" maxlength="150" placeholder="Contoh: OSIS SMA Negeri ...">
+          </div>
+          <div>
+            <label class="lbl" for="d_penerima">Ditujukan kepada</label>
+            <input id="d_penerima" class="field" maxlength="200" placeholder="Contoh: Kepala Sekolah">
+          </div>
+          <div>
+            <label class="lbl" for="d_tanggal">Tanggal / waktu kegiatan</label>
+            <input id="d_tanggal" class="field" maxlength="100" placeholder="Contoh: 14-15 Maret 2027">
+          </div>
+          <div>
+            <label class="lbl" for="d_lokasi">Lokasi kegiatan</label>
+            <input id="d_lokasi" class="field" maxlength="150" placeholder="Contoh: Aula Utama, Denpasar">
+          </div>
+          <div class="md:col-span-2">
+            <label class="lbl" for="d_detail">Detail tambahan</label>
+            <textarea id="d_detail" rows="5" class="field" placeholder="Kebutuhan fasilitas, paket sponsor, atau data realisasi anggaran untuk LPJ"></textarea>
+            <p id="d_hint" class="mt-1 text-xs text-slate-500"></p>
+          </div>
+          <div class="md:col-span-2 flex flex-wrap gap-2">
+            <button type="submit" class="btn-primary">Buat Dokumen dengan AI</button>
+            <button type="reset" class="btn-ghost">Kosongkan form</button>
+          </div>
+        </form>
+      </div>
+      <div id="out-document"></div>
+    </section>
+
+    <!-- ================= TAB 4: DASHBOARD ================= -->
+    <section id="tab-dashboard" class="tab-panel hidden space-y-6">
+      <div class="card">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900">Dashboard Arsip &amp; Analitik</h2>
+            <p class="mt-1 text-sm text-slate-600">Semua proposal, audit, dan dokumen tersimpan otomatis di database SQLite.</p>
+          </div>
+          <button class="btn-ghost" id="btnRefresh">Muat ulang</button>
+        </div>
+        <div id="dash-stats" class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"></div>
+        <div id="dash-org" class="mt-5"></div>
+      </div>
+      <div class="card">
+        <div class="flex gap-5 border-b border-slate-200" role="tablist">
+          <button class="sub-btn is-active" data-sub="proposals">Proposal &amp; RAB</button>
+          <button class="sub-btn" data-sub="audits">Audit Anggaran</button>
+          <button class="sub-btn" data-sub="documents">Surat &amp; LPJ</button>
+        </div>
+        <div id="dash-list" class="mt-4"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ================= DISCLOSURE ================= -->
+  <section id="disclosure" class="border-t border-slate-200 bg-white">
+    <div class="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+      <h2 class="text-lg font-bold text-slate-900">AI &amp; Technology Disclosure</h2>
+      <div class="mt-4 grid gap-4 text-sm text-slate-700 md:grid-cols-2">
+        <div class="rounded-xl bg-slate-50 p-4">
+          <h3 class="font-semibold text-slate-900">AI di dalam aplikasi</h3>
+          <p class="mt-1">Teks proposal, rundown, item RAB, hasil audit, surat, dan LPJ dihasilkan oleh <strong>Google Gemini API (model gemini-3.1-flash-lite)</strong> yang dipanggil dari backend Flask. Perhitungan total RAB dikunci oleh kode Python agar tepat sesuai pagu, bukan oleh AI.</p>
+        </div>
+        <div class="rounded-xl bg-slate-50 p-4">
+          <h3 class="font-semibold text-slate-900">Teknologi</h3>
+          <p class="mt-1">Frontend HTML5, Tailwind CSS (CDN), dan Vanilla JavaScript. Backend Python Flask. Database SQLite. API Key disimpan di environment variable server dan tidak pernah ada di kode sumber atau di browser.</p>
+        </div>
+        <div class="rounded-xl bg-slate-50 p-4">
+          <h3 class="font-semibold text-slate-900">Bantuan AI dalam pengembangan</h3>
+          <p class="mt-1">Kerangka kode aplikasi ini disusun dengan bantuan asisten AI, kemudian ditinjau, diuji, dan disesuaikan oleh tim pengembang.</p>
+        </div>
+        <div class="rounded-xl bg-amber-50 p-4 ring-1 ring-amber-200">
+          <h3 class="font-semibold text-amber-900">Batasan penggunaan</h3>
+          <p class="mt-1 text-amber-900">Seluruh keluaran AI berupa draf. Harga, nominal, dan isi surat wajib diperiksa dan disahkan oleh pengurus organisasi dan pembina sebelum digunakan secara resmi.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="bg-slate-900 py-5 text-center text-xs text-slate-400">
+    WidyaTata AI - BUILD WITH AI, SOLVE FOR BALI | AI Web Innovation Challenge, Bali DigiFest 2026
+  </footer>
+</div>
+
+<!-- ================= MODAL DETAIL ARSIP ================= -->
+<div id="detailModal" class="fixed inset-0 z-40 hidden overflow-y-auto bg-slate-900/60 p-3 sm:p-6">
+  <div class="mx-auto max-w-4xl rounded-2xl bg-slate-50 p-4 shadow-2xl sm:p-6">
+    <div class="no-print mb-3 flex justify-end">
+      <button class="btn-ghost" id="btnCloseModal">Tutup</button>
+    </div>
+    <div id="detailBody"></div>
+  </div>
+</div>
+
+<!-- ================= LOADING ================= -->
+<div id="loading" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm" role="status" aria-live="polite">
+  <div class="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl">
+    <div class="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-blue-100 border-t-blue-600"></div>
+    <p id="loadingMsg" class="mt-4 text-sm font-semibold text-slate-800">AI sedang bekerja...</p>
+    <p class="mt-1 text-xs text-slate-500">Biasanya 10-40 detik. Mohon jangan tutup halaman.</p>
+    <div class="mt-4 h-1.5 overflow-hidden rounded-full bg-blue-100"><div class="sweep h-full w-1/3 rounded-full bg-blue-600"></div></div>
+  </div>
+</div>
+
+<!-- ================= TOAST ================= -->
+<div id="toast" class="fixed bottom-4 left-1/2 z-50 hidden w-[92%] max-w-md -translate-x-1/2 rounded-xl px-4 py-3 text-sm font-medium text-white shadow-lg" role="alert"></div>
+
+<script>
+/* ==========================================================
+   Utilitas
+   ========================================================== */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const nf = new Intl.NumberFormat('id-ID');
+const fmtRp = n => 'Rp ' + nf.format(Math.round(Number(n) || 0));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const slug = s => String(s || 'dokumen').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50) || 'dokumen';
+const fmtDate = s => { if (!s) return '-'; const d = new Date(s.replace(' ', 'T')); return isNaN(d) ? s : d.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }); };
+
+const DOC_LABELS = {
+  peminjaman_gedung: 'Surat Peminjaman Gedung',
+  undangan_pemateri: 'Surat Undangan Pemateri/Juri',
+  sponsorship: 'Surat Permohonan Sponsorship',
+  lpj: 'Ringkasan LPJ'
+};
+const DOC_HINTS = {
+  peminjaman_gedung: 'Isi kebutuhan fasilitas, jumlah peserta, dan jadwal setup/bongkar.',
+  undangan_pemateri: 'Isi topik/sesi, durasi, dan fasilitas atau honor yang disediakan.',
+  sponsorship: 'Isi total kebutuhan dana, paket sponsor, dan benefit yang ditawarkan.',
+  lpj: 'Isi pagu, realisasi tiap pos biaya, jumlah peserta, dan kendala yang terjadi.'
+};
+
+let activeProposal = null, activeDoc = null, historyData = null, histTab = 'proposals';
+
+async function api(method, url, body) {
+  let res;
+  try {
+    res = await fetch(url, {
+      method,
+      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      body: body ? JSON.stringify(body) : undefined
+    });
+  } catch (e) {
+    throw new Error('Tidak dapat terhubung ke server. Pastikan backend Flask sedang berjalan.');
+  }
+  let data = null;
+  try { data = await res.json(); } catch (e) { /* bukan JSON */ }
+  if (!res.ok || (data && data.error)) {
+    throw new Error((data && data.error) || ('Server mengembalikan status ' + res.status + '.'));
+  }
+  return data;
+}
+
+let toastTimer;
+function showToast(msg, type = 'info') {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = 'fixed bottom-4 left-1/2 z-50 w-[92%] max-w-md -translate-x-1/2 rounded-xl px-4 py-3 text-sm font-medium text-white shadow-lg ' +
+    (type === 'error' ? 'bg-red-600' : type === 'success' ? 'bg-emerald-600' : 'bg-slate-800');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.add('hidden'), 4500);
+}
+
+const LOADING_MSGS = {
+  proposal: ['Menganalisis konteks kegiatan di Bali...', 'Menyusun latar belakang dan tujuan...', 'Merancang rundown acara...', 'Menghitung RAB agar sesuai pagu...'],
+  audit: ['Membaca rincian anggaran...', 'Membandingkan dengan harga wajar di Bali...', 'Mencari item krusial yang terlewat...', 'Menyusun rekomendasi optimasi...'],
+  document: ['Menyusun format surat resmi...', 'Menulis isi dokumen...', 'Merapikan kalimat formal...']
+};
+let loadTimer;
+function setLoading(on, kind) {
+  const box = $('#loading');
+  $$('button[type=submit]').forEach(b => b.disabled = on);
+  clearInterval(loadTimer);
+  if (!on) { box.classList.add('hidden'); box.classList.remove('flex'); return; }
+  const msgs = LOADING_MSGS[kind] || ['AI sedang bekerja...'];
+  let i = 0;
+  $('#loadingMsg').textContent = msgs[0];
+  loadTimer = setInterval(() => { i = (i + 1) % msgs.length; $('#loadingMsg').textContent = msgs[i]; }, 2600);
+  box.classList.remove('hidden'); box.classList.add('flex');
+}
+
+function errorBox(msg) {
+  return `<div class="no-print rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"><strong>Proses gagal.</strong> ${esc(msg)}</div>`;
+}
+
+function printCurrent() {
+  const modalOpen = !$('#detailModal').classList.contains('hidden');
+  document.body.classList.toggle('print-modal', modalOpen);
+  window.print();
+}
+window.addEventListener('afterprint', () => document.body.classList.remove('print-modal'));
+
+/* ==========================================================
+   Navigasi tab
+   ========================================================== */
+function showTab(name) {
+  $$('.tab-panel').forEach(p => p.classList.toggle('hidden', p.id !== 'tab-' + name));
+  $$('.tab-btn').forEach(b => b.classList.toggle('is-active', b.dataset.tab === name));
+  if (name === 'dashboard') loadHistory();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+$$('.tab-btn').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+
+/* ==========================================================
+   Data demo juri (studi kasus Bali)
+   ========================================================== */
+const DEMOS = {
+  proposal: [
+    { label: 'Workshop AI & Web Development Mahasiswa se-Bali (Denpasar, Rp 15 juta)', v: { nama: 'Workshop Teknologi AI & Web Development Mahasiswa se-Bali', kategori: 'BEM/UKM Kampus', lokasi: 'Denpasar', peserta: 120, durasi: 2, pagu: 15000000 } },
+    { label: 'Kemah Bakti & Lomba Pramuka Penegak/Penggalang (Badung, Rp 25 juta)', v: { nama: 'Kemah Bakti & Lomba Tingkat Pramuka Penegak/Penggalang', kategori: 'Pramuka/Dewan Kerja', lokasi: 'Badung', peserta: 200, durasi: 3, pagu: 25000000 } },
+    { label: 'Festival Inovasi Kreatif & Pentas Seni Pelajar SMA/SMK (Rp 20 juta)', v: { nama: 'Festival Inovasi Kreatif & Pentas Seni Pelajar SMA/SMK', kategori: 'OSIS SMA/SMK', lokasi: 'Gianyar', peserta: 300, durasi: 2, pagu: 20000000 } }
+  ],
+  audit: [
+    { label: 'Workshop AI & Web Development (anggaran belum lengkap)', v: {
+      nama: 'Workshop Teknologi AI & Web Development Mahasiswa se-Bali',
+      desc: 'Workshop 2 hari di Denpasar untuk 120 mahasiswa se-Bali dengan pagu tersedia Rp 15.000.000.',
+      rincian: 'Sewa aula kampus 2 hari: 2 x Rp 1.500.000 = Rp 3.000.000\nKonsumsi peserta (nasi kotak + snack) 120 orang x 2 hari x Rp 30.000 = Rp 7.200.000\nHonor pemateri 3 orang x Rp 1.000.000 = Rp 3.000.000\nCetak banner & spanduk = Rp 500.000\nSertifikat 120 lembar x Rp 5.000 = Rp 600.000\nTotal = Rp 14.300.000' } },
+    { label: 'Kemah Bakti Pramuka (anggaran melebihi pagu)', v: {
+      nama: 'Kemah Bakti & Lomba Tingkat Pramuka Penegak/Penggalang',
+      desc: 'Perkemahan 3 hari di Badung untuk 200 peserta. Pagu tersedia hanya Rp 25.000.000.',
+      rincian: 'Sewa lahan perkemahan 3 hari = Rp 4.000.000\nKonsumsi 200 peserta x 3 hari x Rp 45.000 = Rp 27.000.000\nHadiah lomba = Rp 3.000.000\nTransport pembina = Rp 2.500.000\nSewa tenda & perlengkapan = Rp 5.000.000\nTotal = Rp 41.500.000' } },
+    { label: 'Festival Inovasi & Pentas Seni Pelajar (anggaran pas pagu)', v: {
+      nama: 'Festival Inovasi Kreatif & Pentas Seni Pelajar SMA/SMK',
+      desc: 'Festival 2 hari di Gianyar untuk 300 pelajar dengan pagu Rp 20.000.000.',
+      rincian: 'Sewa sound system & panggung 2 hari = Rp 9.000.000\nHonor MC & juri = Rp 2.000.000\nKonsumsi panitia 40 orang x 2 hari x Rp 25.000 = Rp 2.000.000\nHadiah juara lomba = Rp 4.000.000\nDekorasi & backdrop = Rp 2.500.000\nDana tak terduga = Rp 500.000\nTotal = Rp 20.000.000' } }
+  ],
+  document: [
+    { label: 'Surat peminjaman aula untuk Workshop AI & Web Development', v: {
+      jenis: 'peminjaman_gedung', nama: 'Workshop Teknologi AI & Web Development Mahasiswa se-Bali', org: 'BEM Fakultas Teknik - Kampus Denpasar',
+      penerima: 'Wakil Dekan Bidang Kemahasiswaan', tanggal: 'Sabtu-Minggu, 14-15 Maret 2027', lokasi: 'Aula Utama Kampus, Denpasar',
+      detail: 'Peserta 120 orang. Membutuhkan aula, proyektor, sound system, dan wifi. Setup H-1 pukul 15.00 WITA.' } },
+    { label: 'Surat sponsorship untuk Kemah Bakti & Lomba Pramuka', v: {
+      jenis: 'sponsorship', nama: 'Kemah Bakti & Lomba Tingkat Pramuka Penegak/Penggalang', org: 'Dewan Kerja Cabang Badung',
+      penerima: 'Pimpinan perusahaan calon sponsor', tanggal: '21-23 Mei 2027', lokasi: 'Bumi Perkemahan, Badung',
+      detail: 'Total kebutuhan dana Rp 25.000.000. Paket sponsor: Platinum Rp 10.000.000, Gold Rp 5.000.000, Silver Rp 2.500.000. Benefit: logo di banner, sebutan oleh MC, dan dokumentasi.' } },
+    { label: 'Ringkasan LPJ Festival Inovasi Kreatif & Pentas Seni', v: {
+      jenis: 'lpj', nama: 'Festival Inovasi Kreatif & Pentas Seni Pelajar SMA/SMK', org: 'OSIS SMA Negeri Gianyar',
+      penerima: 'Kepala Sekolah dan Pembina OSIS', tanggal: '10-11 Oktober 2026', lokasi: 'Gianyar, Bali',
+      detail: 'Pagu Rp 20.000.000. Realisasi: panggung & sound Rp 8.750.000; honor MC & juri Rp 2.000.000; konsumsi Rp 2.100.000; hadiah Rp 4.000.000; dekorasi Rp 2.400.000; lain-lain Rp 300.000 (total Rp 19.550.000, sisa Rp 450.000 dikembalikan ke kas OSIS). Peserta 280 siswa dari 12 sekolah.' } }
+  ]
+};
+
+function buildDemoButtons(kind, handler) {
+  const box = $('#demo-' + kind);
+  box.innerHTML = DEMOS[kind].map((d, i) => `
+    <button type="button" class="btn-demo" data-i="${i}">
+      <span class="text-sm font-semibold text-sky-800">Muat Contoh Input Cepat (Demo Juri)</span>
+      <span class="mt-0.5 text-xs text-slate-600">${esc(d.label)}</span>
+    </button>`).join('');
+  $$('button', box).forEach(b => b.addEventListener('click', () => {
+    handler(DEMOS[kind][+b.dataset.i].v);
+    showToast('Contoh input dimuat. Klik tombol buat untuk menjalankan AI.', 'success');
+  }));
+}
+
+buildDemoButtons('proposal', v => {
+  $('#p_nama').value = v.nama; $('#p_kategori').value = v.kategori; $('#p_lokasi').value = v.lokasi;
+  $('#p_peserta').value = v.peserta; $('#p_durasi').value = v.durasi; $('#p_pagu').value = v.pagu;
+});
+buildDemoButtons('audit', v => {
+  $('#a_nama').value = v.nama; $('#a_desc').value = v.desc; $('#a_rincian').value = v.rincian;
+});
+buildDemoButtons('document', v => {
+  $('#d_jenis').value = v.jenis; $('#d_nama').value = v.nama; $('#d_org').value = v.org;
+  $('#d_penerima').value = v.penerima; $('#d_tanggal').value = v.tanggal; $('#d_lokasi').value = v.lokasi;
+  $('#d_detail').value = v.detail; updateDocHint();
+});
+
+function updateDocHint() { $('#d_hint').textContent = DOC_HINTS[$('#d_jenis').value] || ''; }
+$('#d_jenis').addEventListener('change', updateDocHint);
+updateDocHint();
+
+/* ==========================================================
+   Render: Proposal & RAB
+   ========================================================== */
+function renderProposal(rec) {
+  const r = rec.result || {};
+  const rab = r.rab || [];
+  const sumByDiv = {};
+  rab.forEach(i => { sumByDiv[i.divisi] = (sumByDiv[i.divisi] || 0) + i.total_harga; });
+  const total = r.total_rab ?? rab.reduce((a, i) => a + i.total_harga, 0);
+  const match = total === rec.total_pagu;
+
+  let lastDay = null;
+  const rundownRows = (r.rundown || []).map(x => {
+    let head = '';
+    if (x.hari !== lastDay) {
+      lastDay = x.hari;
+      head = `<tr><td colspan="3" class="bg-blue-50 px-3 py-1.5 text-sm font-bold text-blue-800">Hari ke-${esc(x.hari)}</td></tr>`;
+    }
+    return head + `<tr><td class="td whitespace-nowrap">${esc(x.waktu)}</td><td class="td font-medium">${esc(x.kegiatan)}</td><td class="td text-slate-500">${esc(x.keterangan)}</td></tr>`;
+  }).join('');
+
+  const rabRows = rab.map((i, n) => `
+    <tr>
+      <td class="td text-slate-400">${n + 1}</td>
+      <td class="td">${esc(i.divisi)}</td>
+      <td class="td font-medium">${esc(i.nama_item)}</td>
+      <td class="td text-right">${nf.format(i.kuantitas)}</td>
+      <td class="td">${esc(i.satuan)}</td>
+      <td class="td text-right whitespace-nowrap">${fmtRp(i.harga_satuan)}</td>
+      <td class="td text-right whitespace-nowrap font-semibold">${fmtRp(i.total_harga)}</td>
+    </tr>`).join('');
+
+  const divChips = Object.entries(sumByDiv).map(([d, v]) =>
+    `<span class="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700">${esc(d)}: <strong>${fmtRp(v)}</strong></span>`).join('');
+
+  return `
+  <article class="card space-y-6">
+    <div class="no-print flex flex-wrap gap-2">
+      <button class="btn-primary" onclick="printCurrent()">Cetak / Simpan PDF (Print View)</button>
+      <button class="btn-ghost" onclick="exportRabCsv()">Export RAB ke CSV</button>
+    </div>
+    <header class="border-b border-slate-200 pb-4">
+      <h3 class="text-xl font-extrabold text-slate-900">Proposal Kegiatan: ${esc(rec.nama_kegiatan)}</h3>
+      <p class="mt-1 text-sm text-slate-600">${esc(rec.organisasi)} | ${esc(rec.lokasi)}, Bali | ${nf.format(rec.peserta)} peserta | ${esc(rec.durasi)} hari | Pagu ${fmtRp(rec.total_pagu)}</p>
+      <p class="mt-1 text-xs text-slate-400">Dibuat ${esc(fmtDate(rec.created_at))} WITA${rec.id ? ' | Arsip #' + rec.id : ''}</p>
+    </header>
+    <section><h4 class="mb-1 font-bold text-blue-800">Ringkasan Eksekutif</h4><p class="whitespace-pre-line text-sm leading-relaxed">${esc(r.ringkasan_eksekutif)}</p></section>
+    <section><h4 class="mb-1 font-bold text-blue-800">Latar Belakang</h4><p class="whitespace-pre-line text-sm leading-relaxed">${esc(r.latar_belakang)}</p></section>
+    <section><h4 class="mb-1 font-bold text-blue-800">Tujuan Kegiatan</h4><ol class="list-decimal space-y-1 pl-5 text-sm">${(r.tujuan || []).map(t => `<li>${esc(t)}</li>`).join('')}</ol></section>
+    <section>
+      <h4 class="mb-2 font-bold text-blue-800">Susunan Rundown Acara</h4>
+      <div class="overflow-x-auto rounded-lg border border-slate-200"><table class="w-full min-w-[560px]"><thead><tr><th class="th">Waktu</th><th class="th">Kegiatan</th><th class="th">Keterangan</th></tr></thead><tbody>${rundownRows}</tbody></table></div>
+    </section>
+    <section>
+      <h4 class="mb-2 font-bold text-blue-800">Rencana Anggaran Biaya (RAB)</h4>
+      <div class="mb-3 flex flex-wrap gap-2">${divChips}</div>
+      <div class="overflow-x-auto rounded-lg border border-slate-200">
+        <table class="w-full min-w-[760px]">
+          <thead><tr><th class="th">No</th><th class="th">Divisi</th><th class="th">Nama Item</th><th class="th text-right">Qty</th><th class="th">Satuan</th><th class="th text-right">Harga Satuan</th><th class="th text-right">Total Harga</th></tr></thead>
+          <tbody>${rabRows}</tbody>
+          <tfoot><tr class="bg-blue-50"><td colspan="6" class="px-3 py-2 text-right text-sm font-bold text-blue-900">TOTAL RAB</td><td class="px-3 py-2 text-right text-sm font-extrabold text-blue-900 whitespace-nowrap">${fmtRp(total)}</td></tr></tfoot>
+        </table>
+      </div>
+      <p class="mt-2 text-sm ${match ? 'text-emerald-700' : 'text-amber-700'}">${match ? 'Total RAB sama dengan pagu anggaran ' + fmtRp(rec.total_pagu) + '.' : 'Total RAB berbeda dari pagu ' + fmtRp(rec.total_pagu) + '. Periksa kembali sebelum digunakan.'}</p>
+      ${r.catatan_penyesuaian ? `<p class="mt-1 text-xs text-slate-500">${esc(r.catatan_penyesuaian)}</p>` : ''}
+    </section>
+    ${r.catatan_kontekstual_bali ? `<section class="rounded-xl bg-sky-50 p-4"><h4 class="mb-1 font-bold text-sky-900">Catatan Konteks Bali</h4><p class="text-sm leading-relaxed text-sky-900">${esc(r.catatan_kontekstual_bali)}</p></section>` : ''}
+    <p class="text-xs text-slate-400">Draf ini dibuat dengan bantuan AI. Periksa kembali harga dan isi sebelum diajukan.</p>
+  </article>`;
+}
+
+function exportRabCsv() {
+  if (!activeProposal || !activeProposal.result || !activeProposal.result.rab) { showToast('Belum ada RAB untuk diekspor.', 'error'); return; }
+  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  const rows = [['No', 'Divisi', 'Nama Item', 'Kuantitas', 'Satuan', 'Harga Satuan (Rp)', 'Total Harga (Rp)']];
+  activeProposal.result.rab.forEach((i, n) => rows.push([n + 1, i.divisi, i.nama_item, i.kuantitas, i.satuan, i.harga_satuan, i.total_harga]));
+  rows.push(['', '', 'TOTAL RAB', '', '', '', activeProposal.result.total_rab]);
+  const csv = '\uFEFF' + rows.map(r => r.map(q).join(',')).join('\r\n');
+  downloadBlob(csv, 'text/csv;charset=utf-8', 'RAB_' + slug(activeProposal.nama_kegiatan) + '.csv');
+  showToast('File CSV berhasil diunduh.', 'success');
+}
+
+function downloadBlob(content, type, filename) {
+  const url = URL.createObjectURL(new Blob([content], { type }));
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/* ==========================================================
+   Render: Audit
+   ========================================================== */
+function scoreColor(s) { return s >= 80 ? '#059669' : s >= 60 ? '#2563eb' : s >= 40 ? '#d97706' : '#dc2626'; }
+function pillClass(text) {
+  const t = String(text).toLowerCase();
+  if (/tinggi|boros|tidak layak|revisi besar/.test(t)) return 'bg-red-100 text-red-800';
+  if (/sedang|rendah|terlalu rendah|perbaikan/.test(t)) return 'bg-amber-100 text-amber-800';
+  return 'bg-emerald-100 text-emerald-800';
+}
+const pill = t => `<span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${pillClass(t)}">${esc(t)}</span>`;
+
+function renderAudit(rec) {
+  const r = rec.result || {};
+  const skor = rec.skor_kelayakan ?? r.skor_kelayakan ?? 0;
+  const color = scoreColor(skor);
+  const C = 2 * Math.PI * 54;
+  const off = C * (1 - skor / 100);
+
+  const eff = (r.analisis_efisiensi || []).map(e => `
+    <tr><td class="td font-medium">${esc(e.pos)}</td><td class="td text-right whitespace-nowrap">${e.estimasi_nominal ? fmtRp(e.estimasi_nominal) : '-'}</td><td class="td">${pill(e.penilaian)}</td><td class="td text-slate-600">${esc(e.catatan)}</td></tr>`).join('');
+  const missed = (r.item_terlewat || []).map(t => `
+    <li class="rounded-lg border border-slate-200 p-3">
+      <div class="flex flex-wrap items-center justify-between gap-2"><strong class="text-sm text-slate-900">${esc(t.item)}</strong>${pill('Urgensi ' + t.urgensi)}</div>
+      <p class="mt-1 text-sm text-slate-600">${esc(t.alasan)}</p>
+      ${t.estimasi_biaya ? `<p class="mt-1 text-xs text-slate-500">Estimasi biaya: ${fmtRp(t.estimasi_biaya)}</p>` : ''}
+    </li>`).join('');
+  const recs = (r.rekomendasi || []).map(x => `
+    <li class="rounded-lg bg-blue-50 p-3 text-sm"><strong class="text-blue-900">Prioritas ${esc(x.prioritas)}:</strong> ${esc(x.saran)}${x.dampak ? `<div class="mt-1 text-xs text-blue-800">Dampak: ${esc(x.dampak)}</div>` : ''}</li>`).join('');
+
+  return `
+  <article class="card space-y-6">
+    <div class="no-print flex flex-wrap gap-2"><button class="btn-primary" onclick="printCurrent()">Cetak / Simpan PDF (Print View)</button></div>
+    <header class="flex flex-wrap items-center gap-6 border-b border-slate-200 pb-4">
+      <div class="relative h-32 w-32 shrink-0">
+        <svg viewBox="0 0 120 120" class="h-32 w-32 -rotate-90" aria-hidden="true">
+          <circle cx="60" cy="60" r="54" fill="none" stroke="#e2e8f0" stroke-width="10"/>
+          <circle cx="60" cy="60" r="54" fill="none" stroke="${color}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/>
+        </svg>
+        <div class="absolute inset-0 flex flex-col items-center justify-center"><span class="text-3xl font-extrabold" style="color:${color}">${skor}</span><span class="text-xs text-slate-500">dari 100</span></div>
+      </div>
+      <div class="min-w-0 flex-1">
+        <h3 class="text-xl font-extrabold text-slate-900">Hasil Audit: ${esc(rec.nama_kegiatan)}</h3>
+        <div class="mt-2">${pill(r.status_kelayakan || '-')}</div>
+        <p class="mt-3 text-sm leading-relaxed text-slate-700">${esc(r.ringkasan)}</p>
+        <p class="mt-2 text-xs text-slate-500">Total anggaran terhitung: <strong>${fmtRp(r.total_terhitung)}</strong> | Dibuat ${esc(fmtDate(rec.created_at))} WITA${rec.id ? ' | Arsip #' + rec.id : ''}</p>
+      </div>
+    </header>
+    <section><h4 class="mb-2 font-bold text-blue-800">Analisis Efisiensi Pos Pengeluaran</h4>
+      <div class="overflow-x-auto rounded-lg border border-slate-200"><table class="w-full min-w-[640px]"><thead><tr><th class="th">Pos</th><th class="th text-right">Estimasi</th><th class="th">Penilaian</th><th class="th">Catatan</th></tr></thead><tbody>${eff || '<tr><td class="td" colspan="4">Tidak ada data.</td></tr>'}</tbody></table></div>
+    </section>
+    <section><h4 class="mb-2 font-bold text-blue-800">Item Krusial yang Terlewat</h4>
+      <ul class="grid gap-3 md:grid-cols-2">${missed || '<li class="text-sm text-slate-500">Tidak ada item krusial yang terlewat.</li>'}</ul>
+    </section>
+    <section><h4 class="mb-2 font-bold text-blue-800">Rekomendasi Optimasi Anggaran</h4>
+      <ul class="space-y-2">${recs || '<li class="text-sm text-slate-500">Tidak ada rekomendasi.</li>'}</ul>
+    </section>
+    <p class="text-xs text-slate-400">Skor dan saran dari AI bersifat panduan, bukan keputusan akhir. Konfirmasi harga ke penyedia jasa setempat.</p>
+  </article>`;
+}
+
+/* ==========================================================
+   Render: Dokumen
+   ========================================================== */
+function renderDoc(rec) {
+  return `
+  <article class="card space-y-4">
+    <div class="no-print flex flex-wrap gap-2">
+      <button class="btn-primary" onclick="printCurrent()">Cetak / Simpan PDF (Print View)</button>
+      <button class="btn-ghost" onclick="copyDoc()">Salin teks</button>
+      <button class="btn-ghost" onclick="downloadDocTxt()">Unduh .txt</button>
+    </div>
+    <header class="border-b border-slate-200 pb-3">
+      <h3 class="text-xl font-extrabold text-slate-900">${esc(rec.judul)}</h3>
+      <p class="mt-1 text-xs text-slate-500">${esc(rec.jenis_label || DOC_LABELS[rec.jenis] || rec.jenis)} | ${esc(rec.nama_kegiatan)} | ${esc(fmtDate(rec.created_at))} WITA${rec.id ? ' | Arsip #' + rec.id : ''}</p>
+    </header>
+    <div class="paper rounded-lg border border-slate-200 bg-white p-5 sm:p-8">${esc(rec.isi_dokumen)}</div>
+    <p class="no-print text-xs text-slate-400">Lengkapi bagian bertanda [ ] sebelum dicetak dan ditandatangani.</p>
+  </article>`;
+}
+
+async function copyDoc() {
+  if (!activeDoc) return;
+  try { await navigator.clipboard.writeText(activeDoc.isi_dokumen); showToast('Teks dokumen disalin.', 'success'); }
+  catch (e) { showToast('Gagal menyalin. Blok teks secara manual.', 'error'); }
+}
+function downloadDocTxt() {
+  if (!activeDoc) return;
+  downloadBlob(activeDoc.judul + '\n\n' + activeDoc.isi_dokumen, 'text/plain;charset=utf-8', slug(activeDoc.judul) + '.txt');
+}
+
+/* ==========================================================
+   Submit form
+   ========================================================== */
+async function runTask(kind, outSel, request, render, onDone) {
+  const out = $(outSel);
+  setLoading(true, kind);
+  try {
+    const data = await request();
+    onDone(data.record);
+    out.innerHTML = render(data.record);
+    showToast('Selesai dan tersimpan ke arsip.', 'success');
+    out.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (err) {
+    out.innerHTML = errorBox(err.message);
+    showToast(err.message, 'error');
+  } finally {
+    setLoading(false);
+  }
+}
+
+$('#form-proposal').addEventListener('submit', e => {
+  e.preventDefault();
+  const body = {
+    nama_kegiatan: $('#p_nama').value.trim(), organisasi: $('#p_kategori').value, lokasi: $('#p_lokasi').value.trim(),
+    peserta: $('#p_peserta').value, durasi: $('#p_durasi').value, total_pagu: $('#p_pagu').value
+  };
+  runTask('proposal', '#out-proposal', () => api('POST', '/api/generate-proposal', body), renderProposal, rec => { activeProposal = rec; });
+});
+
+$('#form-audit').addEventListener('submit', e => {
+  e.preventDefault();
+  const body = { nama_kegiatan: $('#a_nama').value.trim(), deskripsi: $('#a_desc').value.trim(), rincian: $('#a_rincian').value.trim() };
+  runTask('audit', '#out-audit', () => api('POST', '/api/audit-budget', body), renderAudit, () => {});
+});
+
+$('#form-document').addEventListener('submit', e => {
+  e.preventDefault();
+  const body = {
+    jenis: $('#d_jenis').value, nama_kegiatan: $('#d_nama').value.trim(), organisasi: $('#d_org').value.trim(),
+    penerima: $('#d_penerima').value.trim(), tanggal: $('#d_tanggal').value.trim(), lokasi: $('#d_lokasi').value.trim(), detail: $('#d_detail').value.trim()
+  };
+  runTask('document', '#out-document', () => api('POST', '/api/generate-doc', body), renderDoc, rec => { activeDoc = rec; });
+});
+
+/* ==========================================================
+   Dashboard Arsip & Analitik
+   ========================================================== */
+async function loadHistory() {
+  try {
+    historyData = await api('GET', '/api/history');
+    renderDashboard();
+  } catch (err) {
+    $('#dash-list').innerHTML = errorBox(err.message);
+  }
+}
+
+function renderDashboard() {
+  const s = historyData.stats;
+  const cards = [
+    ['Proposal & RAB', nf.format(s.total_proposals)],
+    ['Audit anggaran', nf.format(s.total_audits)],
+    ['Surat & LPJ', nf.format(s.total_documents)],
+    ['Rata-rata skor audit', s.avg_skor === null ? '-' : s.avg_skor + '/100']
+  ];
+  $('#dash-stats').innerHTML = cards.map(c => `
+    <div class="rounded-xl bg-slate-50 p-4"><p class="text-sm text-slate-500">${c[0]}</p><p class="mt-1 text-2xl font-extrabold text-blue-800">${c[1]}</p></div>`).join('');
+
+  const max = Math.max(1, ...s.by_organisasi.map(o => o.jumlah));
+  $('#dash-org').innerHTML = `
+    <div class="flex flex-wrap items-baseline justify-between gap-2"><h3 class="font-bold text-slate-900">Proposal per kategori organisasi</h3><p class="text-sm text-slate-500">Total pagu seluruh proposal: <strong class="text-slate-800">${fmtRp(s.total_pagu)}</strong></p></div>
+    <div class="mt-3 space-y-2">${s.by_organisasi.length ? s.by_organisasi.map(o => `
+      <div><div class="flex justify-between text-sm"><span>${esc(o.organisasi)}</span><span class="font-semibold">${o.jumlah}</span></div>
+      <div class="mt-1 h-2 rounded-full bg-slate-100"><div class="h-2 rounded-full bg-sky-500" style="width:${(o.jumlah / max) * 100}%"></div></div></div>`).join('') : '<p class="text-sm text-slate-500">Belum ada proposal. Buat proposal pertama Anda di tab Proposal &amp; RAB.</p>'}</div>`;
+
+  renderHistoryList();
+}
+
+const TYPE_OF = { proposals: 'proposal', audits: 'audit', documents: 'document' };
+
+function renderHistoryList() {
+  const items = historyData[histTab] || [];
+  if (!items.length) {
+    $('#dash-list').innerHTML = '<p class="rounded-lg bg-slate-50 p-6 text-center text-sm text-slate-500">Belum ada arsip di kategori ini. Hasil yang Anda buat akan muncul di sini.</p>';
+    return;
+  }
+  $('#dash-list').innerHTML = `<ul class="divide-y divide-slate-100">${items.map(it => {
+    let title = it.nama_kegiatan, meta = '';
+    if (histTab === 'proposals') meta = `${esc(it.organisasi)} | ${esc(it.lokasi)} | ${nf.format(it.peserta)} peserta | Pagu ${fmtRp(it.total_pagu)}`;
+    if (histTab === 'audits') meta = `Skor ${it.skor_kelayakan}/100 | ${esc(it.status_kelayakan)}`;
+    if (histTab === 'documents') meta = `${esc(it.jenis_label)} | ${esc(it.judul)}`;
+    return `<li class="flex flex-wrap items-center justify-between gap-3 py-3">
+      <div class="min-w-0 flex-1"><p class="truncate font-semibold text-slate-900">${esc(title)}</p><p class="text-sm text-slate-600">${meta}</p><p class="text-xs text-slate-400">${esc(fmtDate(it.created_at))} WITA | #${it.id}</p></div>
+      <div class="flex gap-2"><button class="btn-ghost" onclick="viewItem('${TYPE_OF[histTab]}', ${it.id})">Lihat detail</button><button class="btn-ghost !text-red-700 hover:!border-red-500" onclick="deleteItem('${TYPE_OF[histTab]}', ${it.id})">Hapus</button></div>
+    </li>`;
+  }).join('')}</ul>`;
+}
+
+$$('.sub-btn').forEach(b => b.addEventListener('click', () => {
+  histTab = b.dataset.sub;
+  $$('.sub-btn').forEach(x => x.classList.toggle('is-active', x === b));
+  if (historyData) renderHistoryList();
+}));
+$('#btnRefresh').addEventListener('click', loadHistory);
+
+async function viewItem(type, id) {
+  setLoading(false);
+  try {
+    const { record } = await api('GET', `/api/history/${type}/${id}`);
+    let html = '';
+    if (type === 'proposal') { activeProposal = record; html = renderProposal(record); }
+    else if (type === 'audit') { html = renderAudit(record); }
+    else { activeDoc = record; html = renderDoc(record); }
+    $('#detailBody').innerHTML = html;
+    $('#detailModal').classList.remove('hidden');
+    $('#detailModal').scrollTop = 0;
+    document.body.style.overflow = 'hidden';
+  } catch (err) { showToast(err.message, 'error'); }
+}
+
+function closeModal() {
+  $('#detailModal').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+$('#btnCloseModal').addEventListener('click', closeModal);
+$('#detailModal').addEventListener('click', e => { if (e.target.id === 'detailModal') closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+async function deleteItem(type, id) {
+  if (!confirm('Hapus arsip #' + id + '? Tindakan ini tidak dapat dibatalkan.')) return;
+  try {
+    await api('DELETE', `/api/history/${type}/${id}`);
+    showToast('Arsip dihapus.', 'success');
+    loadHistory();
+  } catch (err) { showToast(err.message, 'error'); }
+}
+
+/* ==========================================================
+   Status layanan AI
+   ========================================================== */
+(async function checkStatus() {
+  const badge = $('#statusBadge');
+  try {
+    const s = await api('GET', '/api/status');
+    badge.textContent = s.ai_configured ? 'Layanan AI siap (' + s.model + ')' : 'API Key Gemini belum diatur di server';
+    if (!s.ai_configured) badge.className = 'rounded-full bg-amber-400/90 px-3 py-1 text-xs font-semibold text-slate-900';
+  } catch (e) {
+    badge.textContent = 'Server tidak terjangkau';
+    badge.className = 'rounded-full bg-red-500/90 px-3 py-1 text-xs font-semibold text-white';
+  }
+})();
+</script>
+</body>
+</html>
